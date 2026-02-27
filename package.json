@@ -1,0 +1,19 @@
+{
+  "name": "xrpl-token-scripts",
+  "version": "1.0.0",
+  "description": "XRPL IOU 发行与 DEX 交易脚本",
+  "main": "dist/xrpl-token.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node xrpl-token.ts",
+    "example": "ts-node examples/full-example.ts"
+  },
+  "dependencies": {
+    "xrpl": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}
