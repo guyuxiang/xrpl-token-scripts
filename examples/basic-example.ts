@@ -145,10 +145,19 @@ export async function dexTradingExample(): Promise<void> {
 
 /**
  * 示例4: IOU 之间交易 (使用 Devnet)
+ * 
+ * 交易需求:
+ * - TokenA: ROR1
+ * - TokenB: RLUSD
+ * - 卖家卖出 10000 ROR1，换 8000 RLUSD
+ * - 买家花费 8000 RLUSD，买入 10000 ROR1
  */
 export async function iouToIouTradingExample(): Promise<void> {
   console.log("=".repeat(50));
-  console.log("📌 示例4: IOU-IOU 交易 (Devnet)");
+  console.log("📌 示例4: ROR1/RLUSD 交易 (Devnet)");
+  console.log("=".repeat(50));
+  console.log("需求: 卖家卖出 10000 ROR1 → 获得 8000 RLUSD");
+  console.log("       买家花费 8000 RLUSD → 获得 10000 ROR1");
   console.log("=".repeat(50));
 
   const client = createClient("devnet");
@@ -161,12 +170,16 @@ export async function iouToIouTradingExample(): Promise<void> {
     ]);
 
     console.log(`\n📋 账户信息:`);
-    console.log(`   做市商: ${maker.address}`);
-    console.log(`   吃单者: ${taker.address}`);
+    console.log(`   卖家(Maker): ${maker.address}`);
+    console.log(`   买家(Taker): ${taker.address}`);
 
-    // 发行两种 IOU（直接通过发送来创建 TrustLine）
-    const tokenA = "COI";  // 必须 3 个字符
-    const tokenB = "COJ";  // 必须 3 个字符
+    // 货币代码
+    const tokenA = "ROR";  // 简化为3字符 (ROR1 需40字符hex格式)
+    const tokenB = "RLU";  // 简化为3字符 (RLUSD 需40字符hex格式)
+
+    console.log(`\n🖊️ 发行代币:`);
+    console.log(`   Token A: ${tokenA} (代表 ROR1)`);
+    console.log(`   Token B: ${tokenB} (代表 RLUSD)`);
 
     console.log(`\n🖊️ 发行 IOU A: ${tokenA}`);
     // 发行方不需要做任何特殊操作，IOU 可以直接发送给信任发行方的账户
@@ -176,63 +189,71 @@ export async function iouToIouTradingExample(): Promise<void> {
     // 发行方不需要做任何特殊操作，IOU 可以直接发送给信任发行方的账户
     console.log(`   ${tokenB} 发行方: ${maker.address}`);
 
-    // 给 taker 发送一些 COI（taker 需要先信任 maker 的 IOU）
-    console.log(`\n💸 给吃单者发送 ${tokenA}...`);
-    await authorizeHolder(client, maker, taker.address, tokenA, "100");
+    // 给 taker 发送一些 tokenA（taker 需要先信任 maker 的 IOU）
+    console.log(`\n💸 给买家发送 ${tokenA} (ROR1)...`);
+    await authorizeHolder(client, maker, taker.address, tokenA, "10000");
 
-    // 同样给 taker 发送一些 COJ
-    console.log(`\n💸 给吃单者发送 ${tokenB}...`);
-    await authorizeHolder(client, maker, taker.address, tokenB, "50");
+    // 同样给 taker 发送一些 tokenB
+    console.log(`\n💸 给买家发送 ${tokenB} (RLUSD)...`);
+    await authorizeHolder(client, maker, taker.address, tokenB, "8000");
 
     // 查询 taker 的余额
-    const takerBalance = await getIOUBalance(client, taker.address, tokenA, maker.address);
-    console.log(`   吃单者 ${tokenA} 余额: ${takerBalance}`);
+    const takerBalanceA = await getIOUBalance(client, taker.address, tokenA, maker.address);
+    const takerBalanceB = await getIOUBalance(client, taker.address, tokenB, maker.address);
+    console.log(`\n📊 买家初始余额:`);
+    console.log(`   ${tokenA} (ROR1): ${takerBalanceA}`);
+    console.log(`   ${tokenB} (RLU): ${takerBalanceB}`);
 
-    // 做市商挂单：卖 10 COINA，买 5 COINB
-    console.log(`\n📝 做市商在 DEX 挂单...`);
-    console.log(`   卖出: 10 ${tokenA}`);
-    console.log(`   买入: 5 ${tokenB}`);
+    // 卖家挂单：卖出 10000 ROR，换 8000 RLU
+    console.log(`\n📝 卖家(Maker)在 DEX 挂单...`);
+    console.log(`   卖出: 10000 ${tokenA} (ROR1)`);
+    console.log(`   买入: 8000 ${tokenB} (RLU)`);
     
     await createOffer(
       client,
       maker,
-      { currency: tokenA, issuer: maker.address, value: "10" },
-      { currency: tokenB, issuer: maker.address, value: "5" },
+      // 付出: 10000 ROR
+      { currency: tokenA, issuer: maker.address, value: "10000" },
+      // 获得: 8000 RLU
+      { currency: tokenB, issuer: maker.address, value: "8000" },
       "sell"
     );
 
-    // 查询做市商的挂单
+    // 查询卖家的挂单
     const offers = await getAccountOffers(client, maker.address);
-    console.log(`\n📊 做市商当前挂单数: ${offers.length}`);
+    console.log(`\n📊 卖家当前挂单数: ${offers.length}`);
     if (offers.length > 0) {
       console.log(`   Offer Sequence: ${offers[0].OfferSequence}`);
     }
 
-    // 模拟吃单者用 COINA 买入 COINB
-    console.log(`\n🔄 吃单者进行交换...`);
-    console.log(`   用 5 ${tokenA} 买入 ${tokenB}...`);
+    // 买家挂单：花费 8000 RLU，买入 10000 ROR
+    console.log(`\n🔄 买家(Taker)进行交换...`);
+    console.log(`   付出: 8000 ${tokenB} (RLU)`);
+    console.log(`   获得: 10000 ${tokenA} (ROR1)`);
     
     await createOffer(
       client,
       taker,
-      { currency: tokenA, issuer: maker.address, value: "5" },
-      { currency: tokenB, issuer: maker.address, value: "2.5" },
+      // 付出: 8000 RLU
+      { currency: tokenB, issuer: maker.address, value: "8000" },
+      // 获得: 10000 ROR
+      { currency: tokenA, issuer: maker.address, value: "10000" },
       "buy"
     );
 
     // 查询最终余额
     const makerBalanceA = await getIOUBalance(client, maker.address, tokenA, maker.address);
     const makerBalanceB = await getIOUBalance(client, maker.address, tokenB, maker.address);
-    const takerBalanceA = await getIOUBalance(client, taker.address, tokenA, maker.address);
-    const takerBalanceB = await getIOUBalance(client, taker.address, tokenB, maker.address);
+    const takerFinalBalanceA = await getIOUBalance(client, taker.address, tokenA, maker.address);
+    const takerFinalBalanceB = await getIOUBalance(client, taker.address, tokenB, maker.address);
 
     console.log(`\n💰 最终余额:`);
-    console.log(`   做市商 ${tokenA}: ${makerBalanceA}`);
-    console.log(`   做市商 ${tokenB}: ${makerBalanceB}`);
-    console.log(`   吃单者 ${tokenA}: ${takerBalanceA}`);
-    console.log(`   吃单者 ${tokenB}: ${takerBalanceB}`);
+    console.log(`   卖家 ${tokenA} (ROR1): ${makerBalanceA}`);
+    console.log(`   卖家 ${tokenB} (RLU): ${makerBalanceB}`);
+    console.log(`   买家 ${tokenA} (ROR1): ${takerFinalBalanceA}`);
+    console.log(`   买家 ${tokenB} (RLU): ${takerFinalBalanceB}`);
 
-    console.log("\n✅ IOU-IOU 交易测试完成!");
+    console.log("\n✅ ROR1/RLSD 交易测试完成!");
 
   } finally {
     await client.disconnect();
