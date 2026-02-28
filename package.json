@@ -1,0 +1,14 @@
+{
+  "name": "xrpl-token-scripts",
+  "version": "1.0.0",
+  "description": "XRPL IOU issuance and DEX trading examples",
+  "main": "basic-example.ts",
+  "scripts": {
+    "start": "ts-node basic-example.ts"
+  },
+  "dependencies": {
+    "xrpl": "^2.14.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  }
+}
