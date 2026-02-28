@@ -156,9 +156,9 @@ async function main() {
   await submitTx(client, userA, {
     TransactionType: "OfferCreate",
     Account: userA.address,
-    TakerPays: { currency: ROR, issuer: issuerA.address, value: "1000" },  // Gives ROR
-    TakerGets: { currency: RLSD, issuer: issuerB.address, value: "1000" },  // Wants RLSD
-  } as any, "10.UserA: SELL ROR for RLSD");
+    TakerPays: { currency: ROR, issuer: issuerA.address, value: "500" },  // Gives 500 ROR
+    TakerGets: { currency: RLSD, issuer: issuerB.address, value: "400" },   // Wants 400 RLSD
+  } as any, "10.UserA: SELL 500 ROR for 400 RLSD");
 
   await new Promise(r => setTimeout(r, 3000));
 
@@ -166,9 +166,9 @@ async function main() {
   await submitTx(client, userB, {
     TransactionType: "OfferCreate",
     Account: userB.address,
-    TakerPays: { currency: RLSD, issuer: issuerB.address, value: "1000" },  // Gives RLSD
-    TakerGets: { currency: ROR, issuer: issuerA.address, value: "1000" },    // Wants ROR
-  } as any, "11.UserB: BUY ROR with RLSD");
+    TakerPays: { currency: RLSD, issuer: issuerB.address, value: "400" },   // Gives 400 RLSD
+    TakerGets: { currency: ROR, issuer: issuerA.address, value: "500" },    // Wants 500 ROR
+  } as any, "11.UserB: BUY 500 ROR with 400 RLSD");
 
   // Check final balances
   console.log("\n--- Balances after trading ---");
